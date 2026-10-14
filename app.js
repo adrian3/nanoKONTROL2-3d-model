@@ -24,7 +24,6 @@ scene.add(new THREE.HemisphereLight(0xfffdf2, 0x758477, 2.7));
 const key = new THREE.DirectionalLight(0xffffff, 4.5); key.position.set(-140, 290, 140); key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left:-260, right:260, top:180, bottom:-180, near:1, far:750 }); key.shadow.bias = -.0003; key.shadow.normalBias = .3; scene.add(key);
 const rim = new THREE.DirectionalLight(0xe0edff, 3); rim.position.set(180, 130, -170); scene.add(rim);
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400), new THREE.ShadowMaterial({color:0x3a4331, opacity:.16})); floor.rotation.x = -Math.PI/2; floor.position.y = -1; floor.receiveShadow = true; scene.add(floor);
 const model = new THREE.Group(); scene.add(model);
 const upper = new THREE.Group(); model.add(upper);
 const controlsLayer = new THREE.Group(); model.add(controlsLayer);
@@ -50,9 +49,40 @@ function rounded(w,d,h,r,mat,parent,x,y,z) {
 }
 function box(w,h,d,mat,parent,x,y,z) {const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);mesh.castShadow=true;parent.add(mesh);return mesh;}
 function cylinder(r,h,mat,parent,x,y,z) { const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,48),mat);mesh.position.set(x,y,z);mesh.castShadow=true;parent.add(mesh);return mesh; }
-rounded(325,83,8,8,plastic,model,0,1,0);
-rounded(323,81,9,7,plastic,upper,0,9,0);
-rounded(318,76,.9,5,topEdgeMaterial,upper,0,17.6,0);
+// The shell has a straight wall between distinct lower and upper bevels.
+// Flat bands retain profile breaks; the upper curve shares smooth normals.
+function shellProfile(levels,parent,smooth=false) {
+ const outline=(w,d,r)=>{
+  const s=new THREE.Shape(),a=w/2,b=d/2;
+  s.moveTo(-a+r,-b);s.lineTo(a-r,-b);s.quadraticCurveTo(a,-b,a,-b+r);
+  s.lineTo(a,b-r);s.quadraticCurveTo(a,b,a-r,b);s.lineTo(-a+r,b);
+  s.quadraticCurveTo(-a,b,-a,b-r);s.lineTo(-a,-b+r);s.quadraticCurveTo(-a,-b,-a+r,-b);
+  return s;
+ };
+ const rings=levels.map(([y,w,d,r])=>outline(w,d,r).getPoints(12).slice(0,-1).map(p=>[p.x,y,p.y]));
+ for(let band=0;band<(smooth?1:rings.length-1);band++) {
+  const section=smooth?rings:rings.slice(band,band+2),n=section[0].length,positions=section.flat(2),indices=[];
+  for(let row=0;row<section.length-1;row++)for(let i=0;i<n;i++){
+   const a=row*n+i,b=row*n+(i+1)%n;indices.push(a,a+n,b,b,a+n,b+n);
+  }
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();
+  const mesh=new THREE.Mesh(geometry,plastic);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
+ }
+ for(const [index,bottom] of [[0,true],[levels.length-1,false]]) {
+  const [y,w,d,r]=levels[index],geometry=new THREE.ShapeGeometry(outline(w,d,r),12);
+  geometry.rotateX(bottom?Math.PI/2:-Math.PI/2);
+  const mesh=new THREE.Mesh(geometry,plastic);mesh.position.y=y;mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);
+ }
+}
+shellProfile([[1,313,71,5],[4.8,325,83,6]],model);
+shellProfile([[4.8,325,83,6],[14.5,325,83,6]],upper);
+// A recessed quarter-ellipse replaces the straight chamfer and raised rim.
+const shoulder=[];
+for(let i=0;i<=24;i++){
+ const angle=i/24*Math.PI/2,inset=5*Math.sin(angle);
+ shoulder.push([14.5+4.08*(1-Math.cos(angle)),325-inset*2,83-inset*2,6-Math.sin(angle)]);
+}
+shellProfile(shoulder,upper,true);
 // A generated, high-resolution screen print supplies markings, never the geometry.
 const faceCanvas = document.createElement('canvas'); faceCanvas.width = 2600; faceCanvas.height = 664;
 const ctx = faceCanvas.getContext('2d');
@@ -83,12 +113,30 @@ function button(name,text,x,z,w=8,d=8,transport=false) {
  const writing=decal(text,w-2,d-2,'#ffffff');writing.material.color.set(0xfca1b6);writing.position.y=2.2;group.add(writing);
  const item=register({name,type:'button',mesh:group,cap,writing,value:0,baseY:.65});buttons.push(item);return item;
 }
+// Rounded, slightly tapered caps with shallow vertical grip flutes.
+const knobGeometry=new THREE.LatheGeometry([
+ [0,1.15],[4.35,1.15],[4.65,1.3],[4.8,1.65],
+ [4.72,2.1],[4.15,9.2],[4.1,9.55],[3.95,9.85],[3.65,10],[0,10]
+].map(([r,y])=>new THREE.Vector2(r,y)),160);
+const knobPositions=knobGeometry.attributes.position;
+for(let i=0;i<knobPositions.count;i++){
+ const x=knobPositions.getX(i),z=knobPositions.getZ(i),y=knobPositions.getY(i),r=Math.hypot(x,z);
+ if(r>0 && y>1.3 && y<9.85){
+  const fade=Math.min(1,(y-1.3)/.6,(9.85-y)/.6);
+  const scale=(r+.09*Math.cos(Math.atan2(x,z)*40)*fade)/r;
+  knobPositions.setXYZ(i,x*scale,y,z*scale);
+ }
+}
+knobGeometry.computeVertexNormals();
+const knobFootGeometry=new THREE.LatheGeometry([
+ [0,0],[5.4,0],[5.8,.15],[5.95,.4],[5.95,.65],[5.8,.85],[4.7,1.2],[0,1.2]
+].map(([r,y])=>new THREE.Vector2(r,y)),64);
 for(let i=0;i<8;i++) {
  const x=-48+i*27.5;
  const knobGroup=new THREE.Group();knobGroup.position.set(x,18.9,-25);controlsLayer.add(knobGroup);
- cylinder(6.5,1.3,knobBaseMaterial,knobGroup,0,.5,0);cylinder(5.5,8.6,capMaterial,knobGroup,0,5.1,0);cylinder(4.6,.6,plastic,knobGroup,0,9.4,0);
- for(let j=0;j<28;j++){const a=j/28*Math.PI*2;const rib=box(.35,6.8,.6,capMaterial,knobGroup,Math.sin(a)*5.5,5.2,Math.cos(a)*5.5);rib.rotation.y=a;}
- const pointer=box(.65,.25,2.8,ink,knobGroup,0,9.85,-3.1);
+ const foot=new THREE.Mesh(knobFootGeometry,knobBaseMaterial);foot.castShadow=true;foot.receiveShadow=true;knobGroup.add(foot);
+ const cap=new THREE.Mesh(knobGeometry,capMaterial);cap.castShadow=true;cap.receiveShadow=true;knobGroup.add(cap);
+ const pointer=box(.45,.08,2.25,ink,knobGroup,0,10.04,-2.5);
  const knob=register({name:`Channel ${i+1} · Pan`,type:'knob',mesh:knobGroup,value:64,index:i,pointer});knobs.push(knob);
  const g=new THREE.Group();g.position.set(x,19,6);controlsLayer.add(g);
  cylinder(.55,31,silver,controlsLayer,x,19.6,5).rotation.x=Math.PI/2;
@@ -100,7 +148,9 @@ for(let i=0;i<8;i++) {
 button('Track · Previous','◀',-145,-4,11,5);button('Track · Next','▶',-129,-4,11,5);
 button('Cycle','CYCLE',-145,9,11,5);button('Marker · Set','SET',-113,9,11,5);button('Marker · Previous','◀',-97,9,11,5);button('Marker · Next','▶',-81,9,11,5);
 ['Rewind','Fast forward','Stop','Play','Record'].forEach((name,i)=>button(`Transport · ${name}`,['◀◀','▶▶','■','▶','●'][i],-145+i*16,25,10,10,true));
-const powerMat=new THREE.MeshStandardMaterial({color:0x351018,emissive:0xff1824,emissiveIntensity:0});const power=cylinder(1.5,.5,powerMat,upper,-150,19,-30);power.scale.z=.55;
+const powerMat=new THREE.MeshStandardMaterial({color:0x351018,emissive:0xff1824,emissiveIntensity:0});const powerShape=new THREE.Shape();powerShape.moveTo(-1.1,-.7);powerShape.lineTo(1.1,-.7);powerShape.absarc(1.1,0,.7,-Math.PI/2,Math.PI/2,false);powerShape.lineTo(-1.1,.7);powerShape.absarc(-1.1,0,.7,Math.PI/2,Math.PI*1.5,false);
+const powerGeometry=new THREE.ExtrudeGeometry(powerShape,{depth:.2,bevelEnabled:false,curveSegments:16});powerGeometry.rotateX(-Math.PI/2);
+const power=new THREE.Mesh(powerGeometry,powerMat);power.position.set(-150,19,-30);upper.add(power);
 function updateItem(item,value) {
  item.value=Math.max(0,Math.min(127,Math.round(value)));
  if(item.type==='fader') item.mesh.position.z=23-item.value/127*31;
@@ -133,10 +183,10 @@ pink.emissive.set(white?0x000000:0x4d0c22);
 buttons.forEach(item=>updateItem(item,item.value));
 printFace();$('finish-name').textContent=finish==='black'?'Graphite black':'Studio white';document.querySelectorAll('[data-finish]').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-pressed',b===btn);});});
 const views={perspective:new THREE.Vector3(105,180,250),top:new THREE.Vector3(0,340,.1),bottom:new THREE.Vector3(90,-235,245)};
-function setView(name,immediate=false){const end=views[name].clone();if(camera.aspect<1.4)end.multiplyScalar(2/camera.aspect);if(immediate){camera.position.copy(end);orbit.update();}else cameraTween={start:camera.position.clone(),end,t:0};document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===name));$('view-label').textContent=`${name==='bottom'?'UNDERSIDE':name.toUpperCase()} VIEW`;floor.visible=name!=='bottom';}
+function setView(name,immediate=false){const end=views[name].clone();if(camera.aspect<1.4)end.multiplyScalar(2/camera.aspect);if(immediate){camera.position.copy(end);orbit.update();}else cameraTween={start:camera.position.clone(),end,t:0};document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===name));$('view-label').textContent=`${name==='bottom'?'UNDERSIDE':name.toUpperCase()} VIEW`;}
 document.querySelectorAll('[data-view]').forEach(btn=>btn.onclick=()=>setView(btn.dataset.view));
 orbit.addEventListener('start',()=>{cameraTween=null;document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.remove('active'));$('view-label').textContent='FREE ORBIT';});
-$('reset').onclick=()=>{setDemo(false);orbit.autoRotate=false;exploded=false;[$('spin'),$('explode')].forEach(b=>b.setAttribute('aria-pressed',false));items.forEach(item=>updateItem(item,item.type==='fader'?80:item.type==='knob'?64:0));setView('perspective');select(faders[0]);};
+$('reset').onclick=()=>{model.rotation.set(0,0,0);key.position.set(-140,290,140);key.intensity=4.5;renderer.toneMappingExposure=1.35;setDemo(false);orbit.autoRotate=false;exploded=false;[$('spin'),$('explode')].forEach(b=>b.setAttribute('aria-pressed',false));items.forEach(item=>updateItem(item,item.type==='fader'?80:item.type==='knob'?64:0));setView('perspective');select(faders[0]);};
 $('capture').onclick=()=>{renderer.render(scene,camera);canvas.toBlob(blob=>{if(!blob)return;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nanokontrol2-study.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);});};
 function resize(){const {width,height}=$('stage').getBoundingClientRect();camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setSize(width,height,false);}
 new ResizeObserver(()=>{resize();if(!gesture && $('view-label').textContent==='PERSPECTIVE VIEW')setView('perspective',true);}).observe($('stage'));resize();orbit.minDistance=220;setView('perspective',true);$('loading').hidden=true;
@@ -148,9 +198,40 @@ renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);elapsed+=
 });
 // Small read-only hook for preview verification and future model integration.
 window.nanoPreview={scene,renderer,camera,items,get demo(){return demo;},get exploded(){return exploded;}};
+function driveView(item,value,previous) {
+ if(!$('midi-view-mode').checked)return;
+ const t=value/127;
+ if(item.type==='button') {
+  if(value===0 || previous>0)return;
+  const actions={'Track · Previous':()=>document.querySelector('[data-finish="black"]').click(),'Track · Next':()=>document.querySelector('[data-finish="white"]').click(),'Cycle':()=>$('spin').click(),'Marker · Set':()=>$('reset').click(),'Marker · Next':()=>$('explode').click(),'Transport · Play':()=>{orbit.autoRotate=true;$('spin').setAttribute('aria-pressed',true);},'Transport · Stop':()=>{orbit.autoRotate=false;$('spin').setAttribute('aria-pressed',false);}};
+  actions[item.name]?.();return;
+ }
+ if(item.type==='fader' && item.index===0) {
+  cameraTween=null;
+  const direction=camera.position.clone().sub(orbit.target).normalize();
+  camera.position.copy(orbit.target).addScaledVector(direction,orbit.maxDistance-t*(orbit.maxDistance-orbit.minDistance));
+ } else if(item.type==='knob') {
+  if(item.index===0)model.rotation.y=(t-.5)*Math.PI*2;
+  if(item.index===1)model.rotation.x=(t-.5)*Math.PI;
+  if(item.index===2)model.rotation.z=(t-.5)*Math.PI;
+  if(item.index===3 || item.index===4) {
+   cameraTween=null;
+   const position=new THREE.Spherical().setFromVector3(camera.position.clone().sub(orbit.target));
+   if(item.index===3)position.theta=(t-.5)*Math.PI*2;
+   else position.phi=.1+t*(Math.PI-.2);
+   camera.position.copy(orbit.target).add(new THREE.Vector3().setFromSpherical(position));
+  }
+  if(item.index===5){const a=t*Math.PI*2;key.position.set(Math.sin(a)*200,290,Math.cos(a)*200);}
+  if(item.index===6)key.intensity=.5+t*7.5;
+  if(item.index===7)renderer.toneMappingExposure=.5+t*2;
+ } else return;
+ orbit.update();
+ document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.remove('active'));
+ $('view-label').textContent='MIDI VIEW';
+}
 const midiLink = createMidiLink({
  items,
- onValue(item,value){setDemo(false);updateItem(item,value);select(item);$('status').textContent='USB MIDI control updated';},
+ onValue(item,value){const previous=item.value;setDemo(false);driveView(item,value,previous);updateItem(item,value);select(item);$('status').textContent='USB MIDI control updated';},
  onStatus(message,connected){powerMat.color.set(connected?0xff1824:0x351018);powerMat.emissiveIntensity=connected?2:0;$('midi-status').textContent=message;$('midi-connect').textContent=connected?'Reconnect MIDI':'Connect nanoKONTROL2';},
 });
 $('midi-connect').onclick=()=>midiLink.connect();
