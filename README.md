@@ -1,6 +1,24 @@
 # nanoKONTROL2 interactive 3D prototype
 
-Self-contained static HTML / Three.js preview. No build step; browser assets are served locally with the site.
+An interactive 3D model that mirrors a real USB Korg nanoKONTROL2 in your browser. Move a physical fader, turn a knob, or press a button and watch its matching control respond on the model.
+
+**[Try the live demo](https://adrian3.github.io/nanoKONTROL2-3d-model/)** — no installation required. You can also explore the model without a controller.
+
+## Try it with your nanoKONTROL2
+
+1. Plug your nanoKONTROL2 into your computer with a USB data cable. Use default CC mode and factory control assignments (see details below).
+2. Open the **[live demo](https://adrian3.github.io/nanoKONTROL2-3d-model/)** in Chrome or Edge.
+3. Click **Connect nanoKONTROL2** and allow the browser’s MIDI permission request.
+4. The small indicator at the upper-left of the model lights **red** when connected and turns off when disconnected.
+5. Move a fader, turn a knob, and press a channel or transport button. The matching control moves on screen, and its name and value appear below the model. Knob rotation follows the physical controller’s direction.
+
+Move every fader and knob once to synchronize their positions. The controller sends values as you use it; the page cannot read all physical positions on connection. If the demo animation is running, a hardware input stops it so you can take control.
+
+If it does not connect, check your USB cable, browser MIDI permission, and the controller’s CC mode. A custom MIDI configuration may need mapping changes.
+
+## Run locally
+
+Static HTML and Three.js; no build step. Initialize the MIDI submodule as described below before serving the project.
 
 From the repository root, run `python3 -m http.server 8000`, then open
 http://localhost:8000/.
@@ -9,6 +27,7 @@ Features:
 - Orbit with mouse or touch; scroll / pinch to zoom.
 - Perspective, top and underside camera presets.
 - Eight movable faders, eight rotary knobs, and all channel and transport buttons.
+- Live USB MIDI input for all 51 controls, with physical knob direction and a red connection indicator.
 - Select controls directly on the model, or use the accessible selector and value slider.
 - Animated control demo, automatic rotation, exploded view, black / white finish, PNG capture and reset.
 
@@ -48,4 +67,4 @@ Clone with `git clone --recurse-submodules https://github.com/adrian3/nanoKONTRO
 
 Run `node --test tests/*.test.mjs` with Node 24. Tests send simulated MIDI bytes through the actual bridge and verify all 51 mappings, releases, reconnects, permission failures and device selection. They do not replace a physical-device test.
 
-Physical verification: a USB nanoKONTROL2 on the development Mac updated the visualization in Chrome. Knob and transport events were observed directly; the operator also confirmed physical controls changed the UI. All 51 mappings are covered separately by simulated-message tests.
+Physical verification: a USB nanoKONTROL2 on the development Mac updated the visualization in Chrome. Knob and transport events were observed directly; the operator confirmed physical controls changed the UI and verified the corrected knob rotation direction. All 51 mappings are covered separately by simulated-message tests.

@@ -104,7 +104,7 @@ const powerMat=new THREE.MeshStandardMaterial({color:0x351018,emissive:0xff1824,
 function updateItem(item,value) {
  item.value=Math.max(0,Math.min(127,Math.round(value)));
  if(item.type==='fader') item.mesh.position.z=23-item.value/127*31;
- if(item.type==='knob') item.mesh.rotation.y=(item.value/127-.5)*Math.PI*1.55;
+ if(item.type==='knob') item.mesh.rotation.y=(.5-item.value/127)*Math.PI*1.55;
  if(item.type==='button'){const on=item.value>63;item.cap.position.y=on?.3:.65;item.writing.material.color.set(on?0xff1824:finish==='white'?0x8c979c:0xfca1b6);item.writing.position.y=on?1.85:2.2;}
  if(selected===item){$('control-value').value=item.value;$('value').textContent=item.type==='button'?(item.value>63?'ON':'OFF'):item.value;}
 }
