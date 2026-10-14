@@ -47,3 +47,5 @@ Initial hardware positions are unknown until controls send messages; move each c
 Clone with `git clone --recurse-submodules https://github.com/adrian3/nanoKONTROL2-3d-model.git`, or run `git submodule update --init --recursive` in an existing checkout. The bridge is pinned to a commit and has no local modifications.
 
 Run `node --test tests/*.test.mjs` with Node 24. Tests send simulated MIDI bytes through the actual bridge and verify all 51 mappings, releases, reconnects, permission failures and device selection. They do not replace a physical-device test.
+
+Physical verification: a USB nanoKONTROL2 on the development Mac updated the visualization in Chrome. Knob and transport events were observed directly; the operator also confirmed physical controls changed the UI. All 51 mappings are covered separately by simulated-message tests.
