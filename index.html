@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nanoKONTROL2 — Interactive study</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+<header><a class="brand" href="https://www.korg.com/us/products/computergear/nanokontrol2/" target="_blank" rel="noreferrer">KORG<span>OBJECT STUDIES / 001</span></a><span class="prototype"><i></i> INTERACTIVE PROTOTYPE</span></header>
+<main>
+<section class="intro"><div><p class="eyebrow">SLIM-LINE USB CONTROLLER</p><h1>nanoKONTROL<span>2</span></h1><p class="description">Small footprint. Full control. Explore every angle.</p></div><div class="specs"><div><strong>08</strong><span>CHANNELS</span></div><div><strong>325</strong><span>MM WIDE</span></div><div><strong>01</strong><span>USB CONNECTION</span></div></div></section>
+<section class="viewer" aria-label="Interactive 3D controller">
+<div class="stage-label"><span>01 / THE CONTROLLER</span><span id="view-label">PERSPECTIVE VIEW</span></div>
+<div id="stage"><canvas id="scene" aria-label="3D nanoKONTROL2. Drag to rotate, scroll to zoom. Click or drag a control to adjust it."></canvas><p id="loading" role="status">Preparing the studio…</p></div>
+<div class="view-controls" aria-label="Camera views"><button class="active" data-view="perspective">Perspective</button><button data-view="top">Top</button><button data-view="bottom">Underside</button><button id="reset" aria-label="Reset camera and controls">↺ Reset</button></div>
+<div class="stage-bottom"><span class="hint">↔ Drag to orbit <b>·</b> Scroll to zoom <b>·</b> Drag a fader or knob</span><button id="capture" class="text-button">Save image ↗</button></div>
+</section>
+<section class="toolbar"><div class="finish"><span class="eyebrow">FINISH</span><button class="swatch black active" data-finish="black" aria-label="Black finish" aria-pressed="true"></button><button class="swatch white" data-finish="white" aria-label="White finish" aria-pressed="false"></button><span id="finish-name">Graphite black</span></div><div class="animations"><button id="spin" aria-pressed="false">↻ Auto rotate</button><button id="explode" aria-pressed="false">⌁ Exploded view</button><button id="demo" class="primary" aria-pressed="false"><span>▶</span> Play demo</button></div></section>
+<section class="control-panel"><div><p class="eyebrow">HANDS ON</p><h2 id="selected-name">Channel 1 · Volume</h2><p id="control-help">Select a control on the model, or use the selector.</p></div><div class="control-inputs"><select id="control-select" aria-label="Select a model control"></select><div class="range-wrap"><input type="range" id="control-value" min="0" max="127" value="80" aria-label="Selected control value"><output id="value">80</output></div></div><span class="live-status" id="status" role="status">Ready to explore</span></section>
+</main>
+<footer><span>A browser-built 3D study. Modeled from Korg product references.</span><a href="https://www.korg.com/us/products/computergear/nanokontrol2/" target="_blank" rel="noreferrer">Original instrument ↗</a></footer>
+<script type="module" src="app.js"></script>
+</body></html>
