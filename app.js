@@ -89,7 +89,7 @@ const ctx = faceCanvas.getContext('2d');
 const texture = new THREE.CanvasTexture(faceCanvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 const face = new THREE.Mesh(new THREE.PlaneGeometry(315,74), new THREE.MeshStandardMaterial({map:texture,roughness:.76,metalness:.03}));face.rotation.x=-Math.PI/2;face.position.y=18.6;upper.add(face);
 function printFace() {
- ctx.fillStyle=finish==='black'?'#262829':'#e8e8e3';ctx.fillRect(0,0,2600,664);ctx.save();ctx.scale(2600/315,664/74);ctx.translate(157.5,37);
+ ctx.fillStyle=finish==='black'?'#262829':'#c7cac4';ctx.fillRect(0,0,2600,664);ctx.save();ctx.scale(2600/315,664/74);ctx.translate(157.5,37);
  const textColor = finish==='black'?'#d7d8d4':'#404440';
  const label=(text,x,z,size=3,align='center',weight='normal')=>{ctx.fillStyle=textColor;ctx.textAlign=align;ctx.font=`${weight} ${size}px Arial`;ctx.fillText(text,x,z);};
  label('KORG',-113,-28,6,'center','900'); ctx.save(); ctx.transform(1,0,-.18,1,0,0);label('nanoKONTROL2',-117,-16,7.5,'center','500');ctx.restore();
@@ -104,7 +104,7 @@ for(const x of [-141,141]) for(const z of [-29,29]) {cylinder(4.5,1.6,rubber,mod
 box(.8,6,10,dark,model,-162.8,10,-17);box(1,4.4,7.8,silver,model,-163.3,10,-17);box(1.1,2.8,5.5,dark,model,-163.9,10,-17);box(1.2,.7,4,silver,model,-164,9.6,-17);
 const bottomCanvas=document.createElement('canvas');bottomCanvas.width=768;bottomCanvas.height=256;const bc=bottomCanvas.getContext('2d');bc.fillStyle='#202324';bc.fillRect(0,0,768,256);bc.fillStyle='#a5aaa7';bc.font='bold 36px Arial';bc.fillText('KORG  nanoKONTROL2',40,70);bc.font='20px Arial';bc.fillText('USB MIDI CONTROLLER',40,112);bc.fillText('DC 5V   •   USB BUS POWERED',40,156);bc.font='15px monospace';bc.fillText('3D PRODUCT STUDY  /  325 × 83 × 30 mm',40,206);
 const bottomTex=new THREE.CanvasTexture(bottomCanvas);bottomTex.colorSpace=THREE.SRGBColorSpace;const bottomLabel=new THREE.Mesh(new THREE.PlaneGeometry(93,31),new THREE.MeshStandardMaterial({map:bottomTex,roughness:.8}));bottomLabel.rotation.x=Math.PI/2;bottomLabel.position.y=.5;model.add(bottomLabel);
-function decal(text,w,d,color='#e8e8e2',bg=null) {const c=document.createElement('canvas');c.width=256;c.height=256;const t=c.getContext('2d');if(bg){t.fillStyle=bg;t.fillRect(0,0,256,128);}t.fillStyle=color;t.textAlign='center';t.textBaseline='middle';t.font=`bold ${text.length>3?58:text.length>1?110:180}px Arial`;t.fillText(text,128,136);const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false}));m.rotation.x=-Math.PI/2;return m;}
+function decal(text,w,d,color='#e8e8e2',bg=null) {const c=document.createElement('canvas');const wordLabel=text==='CYCLE'||text==='SET';c.height=256;c.width=wordLabel?Math.round(256*w/d):256;const t=c.getContext('2d');if(bg){t.fillStyle=bg;t.fillRect(0,0,256,128);}t.fillStyle=color;t.textAlign='center';t.textBaseline='middle';t.font=`bold ${wordLabel?108:text.length>3?58:text.length>1?110:180}px Arial`;t.fillText(text,c.width/2,wordLabel?128:136);const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false}));m.rotation.x=-Math.PI/2;return m;}
 function register(item) {item.id=items.length;items.push(item);item.mesh.traverse(m=>{if(m.isMesh){m.userData.control=item;pickables.push(m);}});const option=document.createElement('option');option.value=item.id;option.textContent=item.name;$('control-select').append(option);return item;}
 function button(name,text,x,z,w=8,d=8,transport=false) {
  const group=new THREE.Group();group.position.set(x,19,z);controlsLayer.add(group);
@@ -169,14 +169,16 @@ canvas.addEventListener('pointermove',e=>{if(gesture){const {item,y,value}=gestu
 function endGesture(){gesture=null;orbit.enabled=true;}canvas.addEventListener('pointerup',endGesture);canvas.addEventListener('pointercancel',endGesture);canvas.addEventListener('lostpointercapture',endGesture);
 function setDemo(on){demo=on;$('demo').setAttribute('aria-pressed',on);$('demo').innerHTML=`<span>${on?'Ⅱ':'▶'}</span> ${on?'Pause demo':'Play demo'}`;$('status').textContent=on?'Automation running':'Ready to explore';}
 $('demo').onclick=()=>setDemo(!demo);
+setDemo(true);
 $('spin').onclick=()=>{orbit.autoRotate=!orbit.autoRotate;$('spin').setAttribute('aria-pressed',orbit.autoRotate);};
 $('explode').onclick=()=>{exploded=!exploded;$('explode').setAttribute('aria-pressed',exploded);};
-document.querySelectorAll('[data-finish]').forEach(btn=>btn.onclick=()=>{finish=btn.dataset.finish;const white=finish==='white';
-plastic.color.set(white?0xe5e6df:0x242626);
-capMaterial.color.set(white?0xd9dad5:0x292b2c);
-topEdgeMaterial.color.set(white?0xe5e6df:0x080b0d);
-knobBaseMaterial.color.set(white?0xd9dad5:0x080b0d);
-faderGrooveMaterial.color.set(white?0xc5c8c1:0x080b0d);
+document.querySelectorAll('[data-finish]').forEach(btn=>btn.onclick=()=>{finish=btn.dataset.finish;const white=finish==='white';document.body.classList.toggle('studio-white',white);
+plastic.color.set(white?0xc5c8c1:0x242626);
+capMaterial.color.set(white?0xb9beb7:0x292b2c);
+capMaterial.roughness=white?.75:.5;
+topEdgeMaterial.color.set(white?0x9fa69d:0x080b0d);
+knobBaseMaterial.color.set(white?0xb9beb7:0x080b0d);
+faderGrooveMaterial.color.set(white?0x9fa69d:0x080b0d);
 pink.color.set(white?0x485050:0xf18da6);
 pink.emissive.set(white?0x000000:0x4d0c22);
 buttons.forEach(item=>updateItem(item,item.value));
@@ -189,10 +191,32 @@ $('reset').onclick=()=>{model.rotation.set(0,0,0);key.position.set(-140,290,140)
 $('capture').onclick=()=>{renderer.render(scene,camera);canvas.toBlob(blob=>{if(!blob)return;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nanokontrol2-study.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);});};
 function resize(){const {width,height}=$('stage').getBoundingClientRect();camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setSize(width,height,false);}
 new ResizeObserver(()=>{resize();if(!gesture && $('view-label').textContent==='PERSPECTIVE VIEW')setView('perspective',true);}).observe($('stage'));resize();orbit.minDistance=220;setView('perspective',true);$('loading').hidden=true;
+const defaultLightPosition=new THREE.Vector3(-140,290,140);
+const lightSweepTarget=new THREE.Vector3();
+let lightSweepPhase=-Math.PI/4,lightWasPlaying=false,lightReturning=false;
 const clock=new THREE.Clock();let elapsed=0;
 renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);elapsed+=dt;if(cameraTween){cameraTween.t=Math.min(1,cameraTween.t+dt*1.5);const t=cameraTween.t;camera.position.lerpVectors(cameraTween.start,cameraTween.end,t*t*(3-2*t));if(t===1)cameraTween=null;}
  explosion=THREE.MathUtils.damp(explosion,exploded?1:0,5,dt);upper.position.y=explosion*26;controlsLayer.position.y=explosion*58;
  if(demo){faders.forEach((f,i)=>updateItem(f,64+52*Math.sin(elapsed*1.3+i*.8)));knobs.forEach((k,i)=>updateItem(k,64+48*Math.sin(elapsed*.7+i*.5)));buttons.forEach((b,i)=>updateItem(b,Math.sin(elapsed*2+i*.7)>.65?127:0));}
+ if(demo){
+  // Use the same direction mapping as knob 6, following its demo value.
+  const angle=knobs[5].value/127*Math.PI*2;
+  key.position.set(Math.sin(angle)*200,290,Math.cos(angle)*200);
+  lightReturning=false;
+ }else if(orbit.autoRotate){
+  if(!lightWasPlaying)lightSweepPhase=Math.atan2(key.position.x,key.position.z);
+  lightSweepPhase+=dt*.6;
+  lightSweepTarget.set(Math.sin(lightSweepPhase)*220,290,Math.cos(lightSweepPhase)*220);
+  key.position.lerp(lightSweepTarget,1-Math.exp(-4*dt));
+  lightReturning=false;
+ }else{
+  if(lightWasPlaying)lightReturning=true;
+  if(lightReturning){
+   key.position.lerp(defaultLightPosition,1-Math.exp(-4*dt));
+   if(key.position.distanceToSquared(defaultLightPosition)<.01){key.position.copy(defaultLightPosition);lightReturning=false;}
+  }
+ }
+ lightWasPlaying=demo || orbit.autoRotate;
  orbit.update();renderer.render(scene,camera);
 });
 // Small read-only hook for preview verification and future model integration.
@@ -202,7 +226,7 @@ function driveView(item,value,previous) {
  const t=value/127;
  if(item.type==='button') {
   if(value===0 || previous>0)return;
-  const actions={'Track · Previous':()=>document.querySelector('[data-finish="black"]').click(),'Track · Next':()=>document.querySelector('[data-finish="white"]').click(),'Cycle':()=>$('spin').click(),'Marker · Set':()=>$('reset').click(),'Marker · Next':()=>$('explode').click(),'Transport · Play':()=>{orbit.autoRotate=true;$('spin').setAttribute('aria-pressed',true);},'Transport · Stop':()=>{orbit.autoRotate=false;$('spin').setAttribute('aria-pressed',false);}};
+  const actions={'Track · Previous':()=>document.querySelector('[data-finish="black"]').click(),'Track · Next':()=>document.querySelector('[data-finish="white"]').click(),'Cycle':()=>$('spin').click(),'Marker · Set':()=>$('reset').click(),'Marker · Next':()=>$('explode').click(),'Transport · Play':()=>setDemo(!demo),'Transport · Stop':()=>{orbit.autoRotate=false;$('spin').setAttribute('aria-pressed',false);}};
   actions[item.name]?.();return;
  }
  if(item.type==='fader' && item.index===0) {
@@ -220,7 +244,7 @@ function driveView(item,value,previous) {
    else position.phi=.1+t*(Math.PI-.2);
    camera.position.copy(orbit.target).add(new THREE.Vector3().setFromSpherical(position));
   }
-  if(item.index===5){const a=t*Math.PI*2;key.position.set(Math.sin(a)*200,290,Math.cos(a)*200);}
+  if(item.index===5){lightReturning=false;const a=t*Math.PI*2;key.position.set(Math.sin(a)*200,290,Math.cos(a)*200);}
   if(item.index===6)key.intensity=.5+t*7.5;
   if(item.index===7)renderer.toneMappingExposure=.5+t*2;
  } else return;
@@ -228,9 +252,10 @@ function driveView(item,value,previous) {
  document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.remove('active'));
  $('view-label').textContent='MIDI VIEW';
 }
+const midiButtonValues=new Map();
 const midiLink = createMidiLink({
  items,
- onValue(item,value){const previous=item.value;setDemo(false);driveView(item,value,previous);updateItem(item,value);select(item);$('status').textContent='USB MIDI control updated';},
+ onValue(item,value){const previous=item.type==='button'?(midiButtonValues.get(item)??0):item.value;if(item.type==='button')midiButtonValues.set(item,value);if(item.name!=='Transport · Play' || !$('midi-view-mode').checked)setDemo(false);driveView(item,value,previous);updateItem(item,value);select(item);$('status').textContent='USB MIDI control updated';},
  onStatus(message,connected){powerMat.color.set(connected?0xff1824:0x351018);powerMat.emissiveIntensity=connected?2:0;$('midi-status').textContent=message;$('midi-connect').textContent=connected?'Reconnect MIDI':'Connect nanoKONTROL2';},
 });
 $('midi-connect').onclick=()=>midiLink.connect();

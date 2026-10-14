@@ -33,7 +33,8 @@ If it does not connect, check your USB cable, browser MIDI permission, and the c
 | Knob 7 | Light brightness |
 | Knob 8 | Exposure |
 | Cycle | Toggle auto rotation |
-| Play / Stop | Start / stop auto rotation |
+| Play | Toggle Play Demo on / off |
+| Stop | Stop auto rotation (and any playing demo) |
 | Set Marker | Reset model rotation, camera, lighting and control values |
 | Marker next | Toggle exploded view |
 
