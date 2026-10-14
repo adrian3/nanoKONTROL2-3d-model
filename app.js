@@ -139,7 +139,6 @@ for(let i=0;i<8;i++) {
  const pointer=box(.45,.08,2.25,ink,knobGroup,0,10.04,-2.5);
  const knob=register({name:`Channel ${i+1} · Pan`,type:'knob',mesh:knobGroup,value:64,index:i,pointer});knobs.push(knob);
  const g=new THREE.Group();g.position.set(x,19,6);controlsLayer.add(g);
- cylinder(.55,31,silver,controlsLayer,x,19.6,5).rotation.x=Math.PI/2;
  rounded(8,20,3.3,.7,capMaterial,g,0,0,0);box(7.7,.3,.55,ink,g,0,3.6,0);
  for(let j=-4;j<=4;j++){box(7.6,.25,.25,faderGrooveMaterial,g,0,3.45,j*1.65);}
  const f=register({name:`Channel ${i+1} · Volume`,type:'fader',mesh:g,value:80,index:i});faders.push(f);
@@ -182,7 +181,7 @@ pink.color.set(white?0x485050:0xf18da6);
 pink.emissive.set(white?0x000000:0x4d0c22);
 buttons.forEach(item=>updateItem(item,item.value));
 printFace();$('finish-name').textContent=finish==='black'?'Graphite black':'Studio white';document.querySelectorAll('[data-finish]').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-pressed',b===btn);});});
-const views={perspective:new THREE.Vector3(105,180,250),top:new THREE.Vector3(0,340,.1),bottom:new THREE.Vector3(90,-235,245)};
+const views={perspective:new THREE.Vector3(-105,210,250),top:new THREE.Vector3(0,340,.1),bottom:new THREE.Vector3(90,-235,245)};
 function setView(name,immediate=false){const end=views[name].clone();if(camera.aspect<1.4)end.multiplyScalar(2/camera.aspect);if(immediate){camera.position.copy(end);orbit.update();}else cameraTween={start:camera.position.clone(),end,t:0};document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===name));$('view-label').textContent=`${name==='bottom'?'UNDERSIDE':name.toUpperCase()} VIEW`;}
 document.querySelectorAll('[data-view]').forEach(btn=>btn.onclick=()=>setView(btn.dataset.view));
 orbit.addEventListener('start',()=>{cameraTween=null;document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.remove('active'));$('view-label').textContent='FREE ORBIT';});
