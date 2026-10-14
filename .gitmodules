@@ -1,0 +1,3 @@
+[submodule "midi-web-controller"]
+	path = midi-web-controller
+	url = https://github.com/adrian3/midi-web-controller.git

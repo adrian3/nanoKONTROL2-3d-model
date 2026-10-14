@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
+import { createMidiLink } from './midi.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('scene');
@@ -147,3 +148,11 @@ renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);elapsed+=
 });
 // Small read-only hook for preview verification and future model integration.
 window.nanoPreview={scene,renderer,camera,items,get demo(){return demo;},get exploded(){return exploded;}};
+const midiLink = createMidiLink({
+ items,
+ onValue(item,value){setDemo(false);updateItem(item,value);select(item);$('status').textContent='USB MIDI control updated';},
+ onStatus(message,connected){$('midi-status').textContent=message;$('midi-connect').textContent=connected?'Reconnect MIDI':'Connect nanoKONTROL2';},
+});
+$('midi-connect').onclick=()=>midiLink.connect();
+midiLink.autoConnect();
+window.addEventListener('pagehide',()=>midiLink.destroy());
