@@ -100,7 +100,7 @@ for(let i=0;i<8;i++) {
 button('Track · Previous','◀',-145,-4,11,5);button('Track · Next','▶',-129,-4,11,5);
 button('Cycle','CYCLE',-145,9,11,5);button('Marker · Set','SET',-113,9,11,5);button('Marker · Previous','◀',-97,9,11,5);button('Marker · Next','▶',-81,9,11,5);
 ['Rewind','Fast forward','Stop','Play','Record'].forEach((name,i)=>button(`Transport · ${name}`,['◀◀','▶▶','■','▶','●'][i],-145+i*16,25,10,10,true));
-const powerMat=new THREE.MeshStandardMaterial({color:0xdffff9,emissive:0xbafcea,emissiveIntensity:2});const power=cylinder(1.5,.5,powerMat,upper,-150,19,-30);power.scale.z=.55;
+const powerMat=new THREE.MeshStandardMaterial({color:0x351018,emissive:0xff1824,emissiveIntensity:0});const power=cylinder(1.5,.5,powerMat,upper,-150,19,-30);power.scale.z=.55;
 function updateItem(item,value) {
  item.value=Math.max(0,Math.min(127,Math.round(value)));
  if(item.type==='fader') item.mesh.position.z=23-item.value/127*31;
@@ -151,7 +151,7 @@ window.nanoPreview={scene,renderer,camera,items,get demo(){return demo;},get exp
 const midiLink = createMidiLink({
  items,
  onValue(item,value){setDemo(false);updateItem(item,value);select(item);$('status').textContent='USB MIDI control updated';},
- onStatus(message,connected){$('midi-status').textContent=message;$('midi-connect').textContent=connected?'Reconnect MIDI':'Connect nanoKONTROL2';},
+ onStatus(message,connected){powerMat.color.set(connected?0xff1824:0x351018);powerMat.emissiveIntensity=connected?2:0;$('midi-status').textContent=message;$('midi-connect').textContent=connected?'Reconnect MIDI':'Connect nanoKONTROL2';},
 });
 $('midi-connect').onclick=()=>midiLink.connect();
 midiLink.autoConnect();
